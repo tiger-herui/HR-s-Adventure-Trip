@@ -56,9 +56,7 @@ spring:
 
 1. Form Login：表单登陆
 
-
-
-![Screen Shot 2021-08-26 at 8.10.58 PM](/Users/rui.he1/Library/Application Support/typora-user-images/Screen Shot 2021-08-26 at 8.10.58 PM.png)
+![](https://i.loli.net/2021/09/01/1MYpyUq6d4e3ohL.png)
 
 ：访问私有资源时，（重定向）让你去登陆，并给你一个登陆页面（login.html)
 
@@ -66,7 +64,7 @@ spring:
 
 2. Basic Authentication：（e.g postman）HTTP Header , base64加密
 
-![Screen Shot 2021-08-26 at 8.13.51 PM](/Users/rui.he1/Library/Application Support/typora-user-images/Screen Shot 2021-08-26 at 8.13.51 PM.png)
+![Screen Shot 2021-08-26 at 8.13.51 PM](https://i.loli.net/2021/09/01/1iIdscOqYkAwGDt.png)
 
 
 
@@ -74,7 +72,7 @@ spring:
 
 ：可插拔
 
-![Screen Shot 2021-08-26 at 8.15.28 PM](/Users/rui.he1/Library/Application Support/typora-user-images/Screen Shot 2021-08-26 at 8.15.28 PM.png)
+![Screen Shot 2021-08-26 at 8.15.28 PM](https://i.loli.net/2021/09/01/Ui1lKGpcR3CAHzE.png)
 
 ### 用户信息怎么获取？
 
