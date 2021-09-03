@@ -80,7 +80,7 @@ privateMethod.invoke(targetObject);
 
 ：Dependency Injection
 
-![]()
+
 
 
 
@@ -90,7 +90,7 @@ bean：被IoC容器管理的对象
 
 IoC容器通过**配置元数据（XML文件、注解、java配置类）**来管理对象：
 
-![](https://camo.githubusercontent.com/ce0b88d5486ec515b5e60b78f3859efbf3b65158ab005186fdebd830776a51b5/68747470733a2f2f696d672d626c6f672e6373646e696d672e636e2f30363262343232626437616334643533616664323866623734623262633934642e706e67)
+![LygCfU29ihSclVO](https://i.loli.net/2021/09/02/LygCfU29ihSclVO.png)
 
 
 
