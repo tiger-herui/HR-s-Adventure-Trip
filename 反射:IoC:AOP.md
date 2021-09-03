@@ -1,3 +1,5 @@
+
+
 # 反射/IoC/AOP
 
 
@@ -12,9 +14,12 @@
 
 **动态代理的实现依赖反射**
 
-```java
-//通过JDK实现动态代理，使用反射类Method调用指定方法。
+JDK动态代理只能代理接口，不能代理类。
 
+- 如果目标对象的实现类实现了接口，Spring AOP将会采用JDK动态代理来生产AOP代理类；
+- 如果目标对象的实现类没有实现接口，Spring AOP将会采用CGLIB来生成AOP代理类（开发无需关心此过程）。
+
+```java
 public class DebugInvocationHandler implements InvocationHandler {
   	// 代理类中的真实对象
     private final Object target;
@@ -30,9 +35,9 @@ public class DebugInvocationHandler implements InvocationHandler {
 }
 ```
 
-### 
 
-### 反射e.g:（？）
+
+### 反射e.g:
 
 ```java
 //获取TargetObject类的Class对象并且创建TargetObject类实例
@@ -64,13 +69,18 @@ privateMethod.invoke(targetObject);
 
 
 
+### [代理模式](/代理模式.md)
+
+
+
 ## IoC
 
 ：Inversion  of control 控制反转，一种关于对象创建和管理的**设计思想**；
 
-​	控制：对象创建（实例化）的权利
+- ​	控制：对象创建（实例化）的权利
 
-​	反转：控制权的转移（交给外部环境）
+- ​	反转：控制权的转移（交给外部环境）
+
 
 ：无需new对象，而是通过**IoC容器**来实例化对象。
 
@@ -132,5 +142,7 @@ IoC容器通过**配置元数据（XML文件、注解、java配置类）**来管
 ：基于动态代理
 
 ：已集成AspectJ
+
+
 
 ![](https://camo.githubusercontent.com/3c56fc05c00d6ecba86e493389f597c8cc2478aa1ede2867bedbb57d74d65b41/68747470733a2f2f696d616765732e7869616f7a6875616e6c616e2e636f6d2f70686f746f2f323031392f39323664666335343962303664323830613337333937663966643439626639642e6a7067)
