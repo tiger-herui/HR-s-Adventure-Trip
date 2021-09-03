@@ -10,7 +10,7 @@ Here is HR's learning space.
 
 ### java
 
-[Java](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/Java.md)
+[Java](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/Java.md)
 
 ### Spring
 
