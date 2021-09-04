@@ -17,7 +17,7 @@
 JDK动态代理只能代理接口，不能代理类。
 
 - 如果目标对象的实现类实现了接口，Spring AOP将会采用JDK动态代理来生产AOP代理类；
-- 如果目标对象的实现类没有实现接口，Spring AOP将会采用CGLIB来生成AOP代理类（开发无需关心此过程）。
+- 如果目标对象的实现类没有实现接口，Spring AOP将会采用CGLIB来生成AOP代理类。
 
 ```java
 public class DebugInvocationHandler implements InvocationHandler {
@@ -94,7 +94,7 @@ privateMethod.invoke(targetObject);
 
 
 
-1. ### Spring bean
+### Spring bean
 
 bean：被IoC容器管理的对象
 
