@@ -1,14 +1,55 @@
 
 
-# 反射/IoC/AOP
+# 反射-IoC-AOP
+
+
+
+> ## 补充
+
+动态语言：运行时可改变自身结构的语言；（javascript/PHP/Python）
+
+静态语言：运行时不可改变自身结构的语言；
+
+Java：准动态语言，利用反射机制使其获得动态语言的特性。
+
+
+
+1. 一个类在内存中只有一个class对象；
+2. class对象只能由系统建立；
+3. 一个类被加载后，类的整个结构都会被封装在Class对象中；
+4. 一个Class对象对应一个加载到JVM中的.class文件；
 
 
 
 ## 反射
 
-：在运行时分析类及执行类中方法。
+：reflection，在运行时分析类及执行类中方法。
 
-：通过反射获取任意一个类的所有属性和方法，并调用。
+：通过反射获取任意一个类的内部信息（类名、构造器、字段...），并直接操作对象的内部属性及方法。
+
+```
+常规方式：引入包类名称——通过new实例化——取得实例化对象；
+反射方式：实例化对象——getClass()方法——得到完整的包类名称
+```
+
+
+
+### class类的创建方式
+
+```java
+//通过对象获得
+Class c1 = targetObject.getClass();
+
+//通过forname获得
+Class c2 = Class.forname("path.path");
+
+//通过类名.class获得
+Class c3 = targetClass.class;
+
+//通过基本内置类型包装类的Type属性
+Class c4 = Integer.TYPE;
+
+```
 
 
 
@@ -66,6 +107,40 @@ Method privateMethod = tagetClass.getDeclaredMethod("privateMethod");
 privateMethod.setAccessible(true);
 privateMethod.invoke(targetObject);
 ```
+
+
+
+### 注解
+
+：反射机制读取注解
+
+#### 元注解
+
+@Target  //使用在哪些地方
+
+@Retention。//运行在哪些地方有效
+
+@Document。//将注解生成在JAVAdoc中
+
+@Inherited  //子类可以继承父类注解
+
+
+
+#### 自定义注解
+
+@Interface  //继承java.lang.annotation.Annotation
+
+```java
+@interface MyAnnotation{
+  //注解的参数：参数类型+参数名+（）
+  String name();
+  
+  int age() default 0;
+  int id() default -1;
+}
+```
+
+
 
 
 
