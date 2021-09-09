@@ -110,44 +110,6 @@ privateMethod.invoke(targetObject);
 
 
 
-### 注解
-
-：反射机制读取注解
-
-#### 元注解
-
-@Target  //使用在哪些地方
-
-@Retention。//运行在哪些地方有效
-
-@Document。//将注解生成在JAVAdoc中
-
-@Inherited  //子类可以继承父类注解
-
-
-
-#### 自定义注解
-
-@Interface  //继承java.lang.annotation.Annotation
-
-```java
-@interface MyAnnotation{
-  //注解的参数：参数类型+参数名+（）
-  String name();
-  
-  int age() default 0;
-  int id() default -1;
-}
-```
-
-
-
-
-
-### [代理模式](/代理模式.md)
-
-
-
 ## IoC
 
 ：Inversion  of control 控制反转，一种关于对象创建和管理的**设计思想**；
@@ -161,11 +123,17 @@ privateMethod.invoke(targetObject);
 
 
 
-### DI：IoC最常见的一种实现
+### DI：IoC的一种实现/一种精确说法
 
 ：Dependency Injection
 
+●**谁依赖于谁**：应用程序依赖于IoC容器；
 
+●**为什么需要依赖**：应用程序需要IoC容器来提供对象需要的外部资源；
+
+●**谁注入谁**：IoC容器注入应用程序某个对象——应用程序依赖的对象；
+
+●**注入了什么**：注入某个对象所需要的外部资源——对象、资源、常量数据等。
 
 
 
@@ -200,7 +168,47 @@ IoC容器通过**配置元数据（XML文件、注解、java配置类）**来管
 
 
 
+### 注解
+
+：反射机制读取注解
+
+#### 元注解
+
+@Target  //使用在哪些地方
+
+@Retention。//运行在哪些地方有效
+
+@Document。//将注解生成在JAVAdoc中
+
+@Inherited  //子类可以继承父类注解
+
+
+
+#### 自定义注解
+
+@Interface  //继承java.lang.annotation.Annotation
+
+```java
+@interface MyAnnotation{
+  //注解的参数：参数类型+参数名+（）
+  String name();
+  
+  int age() default 0;
+  int id() default -1;
+}
+```
+
+
+
+### [代理模式](/代理模式.md)
+
+
+
 ## AOP
+
+背景：封装的过程也增加了代码的重复性；
+
+解决：动态地讲代码切入到类的指定方法中。
 
 ：Aspect oriented programming 面向切面变成，是OOP（面向对象编程）的一种延续。
 
@@ -221,3 +229,4 @@ IoC容器通过**配置元数据（XML文件、注解、java配置类）**来管
 
 
 ![](https://camo.githubusercontent.com/3c56fc05c00d6ecba86e493389f597c8cc2478aa1ede2867bedbb57d74d65b41/68747470733a2f2f696d616765732e7869616f7a6875616e6c616e2e636f6d2f70686f746f2f323031392f39323664666335343962303664323830613337333937663966643439626639642e6a7067)
+
