@@ -157,7 +157,7 @@ privateMethod.invoke(targetObject);
 - ​	反转：控制权的转移（交给外部环境）
 
 
-：无需new对象，而是通过**IoC容器**来实例化对象。
+：无需new对象，而是通过**IoC容器**来实例化对象，Ioc容器实际是个Map，存放各种对象；
 
 
 

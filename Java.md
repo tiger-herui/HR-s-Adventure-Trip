@@ -35,7 +35,11 @@
 ## 定时任务
 
 ```java
-@Scheduled
+@EnableScheduling
+@Scheduled(fixedDelay = 1000, initialDelay = 1000)
+@Scheduled(fixedDelay = "${fixedDelay.in.milliseconds}")
+@Scheduled(fixedRateString = "${fixedRate.in.milliseconds}")
+@Scheduled(cron = "${cron.expression}")
 ```
 
 ### corn表达式
@@ -61,13 +65,117 @@
 ### 异步多线程
 
 ```java
+@EnableAsync
+
+//It must be applied to public methods only.
+//It can be proxied
+//Self-invocation — calling the async method from within the same class — won't work.
 @Async
+
+//AsyncResult class that implements Future, and we can use this to track the result of asynchronous method execution.
+AsyncResult<String>("hello world")
 ```
+
+### Setting delay or rate dynamically
+
+```java
+@Configuration
+@EnableScheduling
+public class DynamicSchedulingConfig implements SchedulingConfigurer {
+
+    @Autowired
+    private TickService tickService;
+
+    @Bean
+    public Executor taskExecutor() {
+        return Executors.newSingleThreadScheduledExecutor();
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.setScheduler(taskExecutor());
+        taskRegistrar.addTriggerTask(
+          new Runnable() {
+              @Override
+              public void run() {
+                  tickService.tick();
+              }
+          },
+          new Trigger() {
+              @Override
+              public Date nextExecutionTime(TriggerContext context) {
+                  Optional<Date> lastCompletionTime =
+                    Optional.ofNullable(context.lastCompletionTime());
+                  Instant nextExecutionTime =
+                    lastCompletionTime.orElseGet(Date::new).toInstant()
+                      .plusMillis(tickService.getDelay());
+                  return Date.from(nextExecutionTime);
+              }
+          }
+        );
+    }
+
+}
+```
+
+
+
+
+
+### 定时任务框架
+
+#### 小顶堆
+
+：完全二叉树；
+
+：每一个节点的值都大于其父节点；
+
+：每一个节点都是一个job(定时任务)
+
+：节点值对应delay(执行时间)
+
+：使用**数组**存储 ——>取模快速定位父节点
+
+
+
+插入：插入的元素和父节点的值相比较，小于则交互位置（逐层上浮）
+
+删除堆顶元素：将尾部元素放入堆顶，然后下沉（和子节点较小的交换）
+
+
+
+#### 时间调度算法
 
 
 
 ## 线程池
 
+：池化技术——提高资源利用率；
+
+### Executor框架
+
+#### Runnable/Callable任务
+
+#### Executor任务执行
+
+#### Future异步计算结果
+
+
+
 ## 重试
+
+```java
+@EnableRetry
+
+@Retryable
+```
+
+- maxAttempts :最大重试次数，默认为3；
+- value：抛出指定异常才会重试;
+- include：和value一样，默认为空;
+- exclude：指定不处理的异常;
+- backoff：重试等待策略，默认使用@Backoff，value默认为1000L；
+
+
 
 ## 事件处理
