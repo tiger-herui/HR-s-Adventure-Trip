@@ -37,18 +37,20 @@ Java：准动态语言，利用反射机制使其获得动态语言的特性。
 ### class类的创建方式
 
 ```java
-//通过对象获得
+//通过对象实例获得
 Class c1 = targetObject.getClass();
 
-//通过forname获得
+//通过Class.forname获得
 Class c2 = Class.forname("path.path");
 
-//通过类名.class获得
+//通过具体类获得
 Class c3 = targetClass.class;
 
 //通过基本内置类型包装类的Type属性
 Class c4 = Integer.TYPE;
 
+//通过类加载器xxxClassLoader.loadClass()传入类路径获取
+Class c5 = ClassLoader.loadClass("cn.javaguide.targetObject");
 ```
 
 
