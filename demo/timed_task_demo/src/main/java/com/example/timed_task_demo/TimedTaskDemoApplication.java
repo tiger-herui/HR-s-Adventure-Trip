@@ -20,15 +20,15 @@ public class TimedTaskDemoApplication {
     }
 
     //@Scheduled(fixedRate = 30*1000)
-    @Async
-    @Scheduled(cron = "0/10 * 7-22 * * ?")
+//    @Async
+//    @Scheduled(cron = "0/10 * 7-22 * * ?")
     public void relax_plan() {
         System.out.println(Thread.currentThread());
         System.out.println("人类需要休息，除非我不做人了" + DateFormat.getDateTimeInstance().format(new Date()));
     }
 
-    //@Scheduled(fixedRate = 10*1000)
-    @Scheduled(cron = "0 0/2 7-22 * * ?")
+    @Scheduled(fixedRate = 10*1000)
+//    @Scheduled(cron = "0 0/2 7-22 * * ?")
     public void learn_plan() {
         System.out.println("今天学习了吗？人类是有极限的，JOJO" + DateFormat.getDateTimeInstance().format(new Date()));
     }
