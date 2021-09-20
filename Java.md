@@ -154,13 +154,33 @@ public class DynamicSchedulingConfig implements SchedulingConfigurer {
 
 ### Executor框架
 
-#### Runnable/Callable任务
+#### Runnable/Callable：任务
 
-#### Executor任务执行
+执行任务需要实现的 **`Runnable` 接口** 或 **`Callable`接口**。
 
-#### Future异步计算结果
+**`Runnable` 接口**或 **`Callable` 接口** 实现类都可以被 **`ThreadPoolExecutor`** 或 **`ScheduledThreadPoolExecutor`** 执行。
 
 
+
+#### Executor：任务执行
+
+​	任务执行机制的核心接口 **`Executor`** ，以及继承自 `Executor` 接口的 **`ExecutorService` 接口。**
+
+**`	ThreadPoolExecutor`** 和 **`ScheduledThreadPoolExecutor`** 这两个关键类实现了 **ExecutorService 接口**。
+
+
+
+![hMy4PgpVZDT61XK](https://i.loli.net/2021/09/16/hMy4PgpVZDT61XK.jpg)
+
+#### Future：异步计算结果
+
+`Future` 接口以及 `Future` 接口的实现类 **`FutureTask`** 类都可以代表异步计算的结果。
+
+把 **`Runnable`接口** 或 **`Callable` 接口** 的实现类提交给 **`ThreadPoolExecutor`** 或 **`ScheduledThreadPoolExecutor`** 执行，调用 `submit()` 方法时会返回一个 **`FutureTask`** 对象
+
+
+
+![iVfQhuNvamBKdyA](https://i.loli.net/2021/09/16/iVfQhuNvamBKdyA.png)
 
 ## 重试
 
