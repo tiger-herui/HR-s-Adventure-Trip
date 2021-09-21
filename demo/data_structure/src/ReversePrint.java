@@ -1,13 +1,7 @@
+import pojo.ListNode;
 import java.util.Stack;
 
-public class reversePrint {
-
-//     public class ListNode {
-//     int val;
-//     ListNode next;
-//     ListNode(int x) { val = x; }
-//     }
-
+public class ReversePrint {
     public int[] reversePrint(ListNode head) {
         Stack<ListNode> stack = new Stack<ListNode>();
         ListNode temp = head;

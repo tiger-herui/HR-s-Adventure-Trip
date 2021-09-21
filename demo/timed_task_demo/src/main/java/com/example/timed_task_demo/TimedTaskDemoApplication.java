@@ -20,8 +20,8 @@ public class TimedTaskDemoApplication {
     }
 
     //@Scheduled(fixedRate = 30*1000)
-//    @Async
 //    @Scheduled(cron = "0/10 * 7-22 * * ?")
+    @Async("taskExecutor")
     public void relax_plan() {
         System.out.println(Thread.currentThread());
         System.out.println("人类需要休息，除非我不做人了" + DateFormat.getDateTimeInstance().format(new Date()));
