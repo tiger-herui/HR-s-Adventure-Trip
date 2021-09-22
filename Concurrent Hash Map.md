@@ -200,7 +200,7 @@ public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
 
 ### 2.1 添加元素put/putVal方法
 
-![](C:/Users/herui/Desktop/img/Snipaste_2020-05-16_12-04-08.jpg)
+![zaZodQBbXeN6LCm](https://i.loli.net/2021/09/22/zaZodQBbXeN6LCm.jpg)
 
 1.为输入的Key做Hash运算，得到hash值。
 
@@ -343,7 +343,7 @@ private final Node<K,V>[] initTable() {
 
 ## 3 jdk1.8扩容安全
 
-![](C:/Users/herui/Desktop/img/微信截图_20200516213316.png)
+![MKQdtTPWwOz1hx2](https://i.loli.net/2021/09/22/MKQdtTPWwOz1hx2.png)
 
 ```java
 private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
@@ -678,7 +678,7 @@ private final void addCount(long x, int check) {
 >
 > **③ 当数组为空，并且此时有别的线程正在创建数组，那么尝试对baseCount做累加，成功即返回，否则自旋**
 
-![](C:/Users/herui/Desktop/img/微信截图_20200516185407.png)
+![lzavFsJ7U6ekLqj](https://i.loli.net/2021/09/22/lzavFsJ7U6ekLqj.png)
 
 ```java
 private final void fullAddCount(long x, boolean wasUncontended) {
