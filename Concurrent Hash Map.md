@@ -2,8 +2,6 @@
 
 > 在多线程环境下，操作HashMap会导致各种各样的线程安全问题，比如HashMap进行扩容重哈希时导致Entry链形成环。一旦Entry链中有环，势必会导致在同一个桶中进行插入、查询、删除等操作时陷入死循环。
 
-<img src="https://img-blog.csdn.net/20170317181610752?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvanVzdGxvdmV5b3Vf/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="img" style="zoom:75%;" />
-
 
 
 ​	ConcurrentHashMap是J.U.C(java.util.concurrent包)的重要成员，它是HashMap的一个线程安全的、支持高效并发的版本。
@@ -47,7 +45,8 @@ final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)
 /**
  * The segments, each of which is a specialized hash table
  */
-final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Segment数组    /**
+final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Segment数组    
+		/**
      * Mask value for indexing into segments. The upper bits of a
      * key's hash code are used to choose the segment.
      */
@@ -57,11 +56,6 @@ final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Seg
      * Shift value for indexing within segments.
      */
     final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)减去对segments的大小取以2为底的对数值，是不可变的
-
-    /**
-     * The segments, each of which is a specialized hash table
-     */
-    final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Segment数组
 ```
 
 
@@ -118,14 +112,37 @@ static final class HashEntry<K,V> {
 }
 ```
 
+# ConCurrentHashMap 1.8 VS 1.7
+
+![nwXSULQpcaGPRqK](https://i.loli.net/2021/09/26/nwXSULQpcaGPRqK.jpg)
+
+
+
+![ZqpHkrY3tzv4g5W](https://i.loli.net/2021/09/26/ZqpHkrY3tzv4g5W.jpg)
+
+
+
+去除 `Segment + HashEntry + Unsafe` 的实现
+改为 `Synchronized + CAS + Node + Unsafe` 的实现
+其实 Node 和 HashEntry 的内容一样，但是HashEntry是一个内部类。
+用 Synchronized + CAS 代替 Segment ，这样锁的粒度更小了，并且不是每次都要加锁了，CAS尝试失败了在加锁。
 
 
 
 # ConcurrentHashMap源码分析
 
-## 1 jdk1.8容器初始化
+ **`sizeCtl`含义解释**
 
-### 1.1 源码分析
+> **构造方法中，都涉及到一个变量`sizeCtl`，这是一个非常重要的变量，而且具有非常丰富的含义，它的值不同，对应的含义也不一样**
+
+1. `sizeCtl = 0`：默认状态，表示数组未初始化， 且初始容量为16
+2. `sizeCtl > 0`：如果数组未初始化，那么其记录的是数组的初始容量，如果数组已经初始化，那么其记录的是数组的扩容阈值(数组初始容量*0.75)
+3. `sizeCtl = -1`：占位符，表示数组正在进行初始化
+4. `sizeCtl < -1 `：表示N-1个线程正在扩容
+
+
+
+## 1 jdk1.8容器初始化
 
 1. 在jdk8的ConcurrentHashMap中一共有5个构造方法，这四个构造方法中都没有对内部的数组做初始化， 只是对一些变量的初始值做了处理。
 
@@ -138,7 +155,7 @@ public ConcurrentHashMap() {
 ```
 
 ```java
-//传递进来一个初始容量，ConcurrentHashMap会基于这个值计算一个比这个值大的2的幂次方数作为初始容量
+//传递进来一个初始容量，ConcurrentHashMap会基于这个值计算一个比这个值大的（2的幂次方数）作为初始容量
 public ConcurrentHashMap(int initialCapacity) {
     if (initialCapacity < 0)
         throw new IllegalArgumentException();
@@ -149,7 +166,7 @@ public ConcurrentHashMap(int initialCapacity) {
 }
 ```
 
-> 注意，调用这个方法，得到的初始容量和HashMap以及jdk7的ConcurrentHashMap不同，即使传递的是一个2的幂次方数，该方法计算出来的初始容量依然是比这个值大的2的幂次方数
+> 注意，调用这个方法，得到的初始容量和HashMap以及jdk1.7的ConcurrentHashMap不同，即使传递的是一个2的幂次方数，该方法计算出来的初始容量依然是比这个值大的2的幂次方数
 
 ```java
 //调用四个参数的构造
@@ -182,19 +199,7 @@ public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
 }
 ```
 
-### 1.2 `sizeCtl`含义解释
 
-> **注意：以上这些构造方法中，都涉及到一个变量`sizeCtl`，这是一个非常重要的变量，而且具有非常丰富的含义，它的值不同，对应的含义也不一样**
-
-1. `sizeCtl`为0，代表数组未初始化， 且数组的初始容量为16
-
-2. `sizeCtl`为正数，如果数组未初始化，那么其记录的是数组的初始容量，如果数组已经初始化，那么其记录的是数组的扩容阈值
-
-   （数组初始容量*0.75）
-
-3. `sizeCtl`为-1，表示数组正在进行初始化
-
-4. `sizeCtl`小于0，并且不是-1，表示数组正在扩容， -(1+n)，表示此时有n个线程正在共同完成数组的扩容操作
 
 ## 2 jdk1.8添加安全
 
@@ -202,17 +207,12 @@ public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
 
 ![zaZodQBbXeN6LCm](https://i.loli.net/2021/09/22/zaZodQBbXeN6LCm.jpg)
 
-1.为输入的Key做Hash运算，得到hash值。
-
-2.通过hash值，定位到对应的Segment对象
-
-3.获取可重入锁
-
-4.再次通过hash值，定位到Segment当中数组的具体位置。
-
-5.插入或覆盖HashEntry对象。
-
-6.释放锁。
+1. 根据 key 计算出 hashcode 。
+2. 判断是否需要进行初始化。
+3. 即为当前 key 定位出的 Node，如果为空表示当前位置可以写入数据，利用 CAS 尝试写入，失败则自旋保证成功。
+4. 如果当前位置的 `hashcode == MOVED == -1`,则需要进行扩容。
+5. 如果都不满足，则利用 synchronized 锁写入数据。
+6. 如果数量大于 `TREEIFY_THRESHOLD` 则要转换为红黑树。
 
 ```java
 public V put(K key, V value) {
@@ -342,6 +342,8 @@ private final Node<K,V>[] initTable() {
 
 
 ## 3 jdk1.8扩容安全
+
+​	段内扩容（段内元素超过该段对应Entry数组长度的75%触发扩容，不会对整个Map进行扩容），插入前检测需不需要扩容，有效避免无效扩容。
 
 ![MKQdtTPWwOz1hx2](https://i.loli.net/2021/09/22/MKQdtTPWwOz1hx2.png)
 
@@ -783,6 +785,12 @@ private final void fullAddCount(long x, boolean wasUncontended) {
 ```
 
 ## 6 jdk1.8集合长度获取
+
+> ​	在 `HashMap` 中，调用 `put` 方法之后会通过 `++size` 的方式来存储当前集合中元素的个数，但是在并发模式下，这种操作是不安全的，直接通过 `CAS` 操作来修改 `size` 是可行的，但假如同时有非常多的线程要修改 `size` 操作，那么只会有一个线程能够替换成功，其他线程只能不断的尝试 `CAS`，这会影响到 `ConcurrentHashMap` 集合的性能，所以:
+>
+> ​	定义一个数组来计数，而且这个用来计数的数组也能扩容，每次线程需要计数的时候，都通过随机的方式获取一个数组下标的位置进行操作，这样就可以尽可能的降低了锁的粒度，最后获取 `size` 时，则通过遍历数组来实现计数。
+
+
 
 ### 6.1 size方法
 
