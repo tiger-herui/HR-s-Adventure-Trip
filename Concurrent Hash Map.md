@@ -1,120 +1,16 @@
-# Concurrent Hash Map
-
 > 在多线程环境下，操作HashMap会导致各种各样的线程安全问题，比如HashMap进行扩容重哈希时导致Entry链形成环。一旦Entry链中有环，势必会导致在同一个桶中进行插入、查询、删除等操作时陷入死循环。
-
-
 
 ​	ConcurrentHashMap是J.U.C(java.util.concurrent包)的重要成员，它是HashMap的一个线程安全的、支持高效并发的版本。
 
 ​	在默认理想状态下，ConcurrentHashMap可以支持16个线程执行并发写操作及任意数量线程的读操作。
 
-​	ConcurrentHashMap类中包含两个静态内部类 HashEntry 和 Segment。
 
-- HashEntry 用来封装具体的K/V对，是个典型的四元组；
-- Segment 用来充当锁的角色，每个 Segment 对象守护整个ConcurrentHashMap的若干个桶 (可以把Segment看作是一个小型的哈希表)，其中每个桶是由若干个 HashEntry 对象链接起来的链表。
-- 总的来说，一个ConcurrentHashMap实例中包含由若干个Segment实例组成的数组，而一个Segment实例又包含由若干个桶，每个桶中都包含一条由若干个 HashEntry 对象链接起来的链表。
-
-**ConcurrentHashMap的高效并发机制是通过以下三方面来保证的**：
-
-1. 通过分段锁技术保证并发环境下的写操作；
-
-2. 通过 HashEntry的不变性、Volatile变量的内存可见性和加锁重读机制保证高效、安全的读操作；
-
-3. 通过不加锁和加锁两种方案控制跨段操作的的安全性。
-
-![img](http://static.zybuluo.com/Rico123/zaqxg0nmu1qq79lm6wpwss2f/ConcurrentHashMap.jpg)
-
-## 成员变量
-
-​	与HashMap相比，ConcurrentHashMap 增加了两个属性用于定位段，分别是 segmentMask 和 segmentShift。
-
-​	此外，不同于HashMap的是，ConcurrentHashMap底层结构是一个**Segment数组**，而不是Object数组。
-
-```java
-/**
- * Mask value for indexing into segments. The upper bits of a
- * key's hash code are used to choose the segment.
- */
-final int segmentMask;  // 用于定位段，大小等于segments数组的大小减 1，是不可变的
-
-/**
- * Shift value for indexing within segments.
- */
-final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)减去对segments的大小取以2为底的对数值，是不可变的
-
-/**
- * The segments, each of which is a specialized hash table
- */
-final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Segment数组    
-		/**
-     * Mask value for indexing into segments. The upper bits of a
-     * key's hash code are used to choose the segment.
-     */
-    final int segmentMask;  // 用于定位段，大小等于segments数组的大小减 1，是不可变的
-
-    /**
-     * Shift value for indexing within segments.
-     */
-    final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)减去对segments的大小取以2为底的对数值，是不可变的
-```
-
-
-
-## segment
-
-> 重入锁，指的是以线程为单位，当一个线程获取对象锁之后，这个线程可以再次获取本对象上的锁，而其他的线程是不可以的。synchronized 和   ReentrantLock 都是可重入锁，意义在于防止死锁。
-
-​	Segment 类继承于 ReentrantLock 类，从而使得 Segment 对象能充当锁的角色。
-
-​	对每个segment中的数据需要同步操作的话都是使用segment容器对象自身的锁来实现。
-
-​	每个 Segment 对象用来守护它的成员对象 table 中包含的若干个桶。table 是一个由 HashEntry 对象组成的链表数组，table 数组的每一个数组成员就是一个桶。
-
-<img src="http://static.zybuluo.com/Rico123/1htf73l5swe0jek5a50fn4hi/ConcurrentHashMap%E7%A4%BA%E6%84%8F%E5%9B%BE.jpg" alt="img" style="zoom:80%;" />
-
-### count 变量
-
-> volatile
-
-一个计数器，它表示每个 Segment 对象管理的 table 数组包含的 HashEntry 对象的个数，也就是 Segment 中包含的 HashEntry 对象的总数。
-
-​	之所以在每个 Segment 对象中包含一个计数器，而不是在 ConcurrentHashMap 中使用全局的计数器，是对 ConcurrentHashMap 并发性的考虑：**因为这样当需要更新计数器时，不用锁定整个ConcurrentHashMap**。
-
-1. 每次对段进行结构上的改变，如在段中进行增加/删除节点(修改节点的值不算结构上的改变)，都要更新count的值。
-2. 在JDK的实现中每次读取操作开始都要先读取count的值。
-
-## HashEntry
-
-HashEntry用来封装具体的键值对，是个典型的四元组。
-
-HashEntry包括同样的四个域，分别是key、hash、value和next。
-
-- key，hash和next域都被声明为final
-
-- value域被volatile所修饰
-
-**因此HashEntry对象几乎是不可变的，这是ConcurrentHashmap读操作并不需要加锁的一个重要原因。**
-
-```java
-//ConcurrentHashMap中真正存储数据的对象
-static final class HashEntry<K,V> {
-    final int hash; //通过运算，得到的键的hash值
-    final K key; // 存入的键
-    volatile V value; //存入的值
-    volatile HashEntry<K,V> next; //记录下一个元素，形成单向链表
-
-    HashEntry(int hash, K key, V value, HashEntry<K,V> next) {
-        this.hash = hash;
-        this.key = key;
-        this.value = value;
-        this.next = next;
-    }
-}
-```
 
 # ConCurrentHashMap 1.8 VS 1.7
 
 ![nwXSULQpcaGPRqK](https://i.loli.net/2021/09/26/nwXSULQpcaGPRqK.jpg)
+
+1.7:每次通过 `hash` 确认位置时需要 `2` 次才能定位到当前 `key` 应该落在哪里。
 
 
 
@@ -125,7 +21,9 @@ static final class HashEntry<K,V> {
 去除 `Segment + HashEntry + Unsafe` 的实现
 改为 `Synchronized + CAS + Node + Unsafe` 的实现
 其实 Node 和 HashEntry 的内容一样，但是HashEntry是一个内部类。
-用 Synchronized + CAS 代替 Segment ，这样锁的粒度更小了，并且不是每次都要加锁了，CAS尝试失败了在加锁。
+用 Synchronized + CAS 代替 Segment ，这样锁的粒度更小了，并且不是每次都要加锁了，CAS尝试失败了再加锁。
+
+ ConcurrentHashMap 还会有链表转红黑树的操作，以提高查找的速度，红黑树时间复杂度为 `O(logn)`，而链表是 `O(n/2)`，因此只在 `O(logn)<O(n/2)` 时才会进行转换，也就是以 8 作为分界点。
 
 
 
@@ -213,6 +111,7 @@ public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
 4. 如果当前位置的 `hashcode == MOVED == -1`,则需要进行扩容。
 5. 如果都不满足，则利用 synchronized 锁写入数据。
 6. 如果数量大于 `TREEIFY_THRESHOLD` 则要转换为红黑树。
+7. ![qjXbrhQViTodO7U](https://i.loli.net/2021/09/29/qjXbrhQViTodO7U.jpg)
 
 ```java
 public V put(K key, V value) {
@@ -224,8 +123,7 @@ public V put(K key, V value) {
 final V putVal(K key, V value, boolean onlyIfAbsent) {
     //如果有空值或者空键，直接抛异常
     if (key == null || value == null) throw new NullPointerException();
-    //基于key计算hash值，并进行一定的扰动
-    //一定是正数，方便
+    //基于key计算hash值
     int hash = spread(key.hashCode());
     //记录某个桶上元素的个数，如果超过8个，会转成红黑树
     int binCount = 0;

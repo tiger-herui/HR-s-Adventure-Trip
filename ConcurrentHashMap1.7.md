@@ -1,4 +1,44 @@
-ConcurrentHashMap1.7
+ConcurrentHashMap类中包含两个静态内部类 HashEntry 和 Segment。
+
+- HashEntry 用来封装具体的K/V对，是个典型的四元组；
+- Segment 用来充当锁的角色，每个 Segment 对象守护整个ConcurrentHashMap的若干个桶 (可以把Segment看作是一个小型的哈希表)，其中每个桶是由若干个 HashEntry 对象链接起来的链表。
+- 总的来说，一个ConcurrentHashMap实例中包含由若干个Segment实例组成的数组，而一个Segment实例又包含由若干个桶，每个桶中都包含一条由若干个 HashEntry 对象链接起来的链表。
+
+
+
+​	与HashMap相比，ConcurrentHashMap 增加了两个属性用于定位段，分别是 segmentMask 和 segmentShift。
+
+​	此外，不同于HashMap的是，ConcurrentHashMap底层结构是一个**Segment数组**，而不是Object数组。
+
+```java
+/**
+ * Mask value for indexing into segments. The upper bits of a
+ * key's hash code are used to choose the segment.
+ */
+final int segmentMask;  // 用于定位段，大小等于segments数组的大小减 1，是不可变的
+
+/**
+ * Shift value for indexing within segments.
+ */
+final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)减去对segments的大小取以2为底的对数值，是不可变的
+
+/**
+ * The segments, each of which is a specialized hash table
+ */
+final Segment<K,V>[] segments;   // ConcurrentHashMap的底层结构是一个Segment数组    
+		/**
+     * Mask value for indexing into segments. The upper bits of a
+     * key's hash code are used to choose the segment.
+     */
+    final int segmentMask;  // 用于定位段，大小等于segments数组的大小减 1，是不可变的
+
+    /**
+     * Shift value for indexing within segments.
+     */
+    final int segmentShift;    // 用于定位段，大小等于32(hash值的位数)减去对segments的大小取以2为底的对数值，是不可变的
+```
+
+
 
 ## 1 Unsafe
 
@@ -126,9 +166,17 @@ public ConcurrentHashMap(int initialCapacity,
 
 ### 2.2 Segment
 
-​	Segment类继承自ReentrantLock类的，它可以实现同步操作，从而保证多线程下的安全。
+> 重入锁，指的是以线程为单位，当一个线程获取对象锁之后，这个线程可以再次获取本对象上的锁，而其他的线程是不可以的。synchronized 和   ReentrantLock 都是可重入锁，意义在于防止死锁。
 
-​	因为每个Segment之间的锁互不影响，所以我们也将ConcurrentHashMap中的这种锁机制称之为**分段锁**。
+​	Segment 类继承于 ReentrantLock 类，从而使得 Segment 对象能充当锁的角色。
+
+​	对每个segment中的数据需要同步操作的话都是使用segment容器对象自身的锁来实现。
+
+​	每个 Segment 对象用来守护它的成员对象 table 中包含的若干个桶。table 是一个由 HashEntry 对象组成的链表数组，table 数组的每一个数组成员就是一个桶。
+
+<img src="http://static.zybuluo.com/Rico123/1htf73l5swe0jek5a50fn4hi/ConcurrentHashMap%E7%A4%BA%E6%84%8F%E5%9B%BE.jpg" alt="img" style="zoom:80%;" />
+
+​	Segment类继承自ReentrantLock类的，它可以实现同步操作，从而保证多线程下的安全。因为每个Segment之间的锁互不影响，所以我们也将ConcurrentHashMap中的这种锁机制称之为**分段锁**。
 
 ```
 static final class Segment<K,V> extends ReentrantLock implements Serializable {
@@ -138,7 +186,17 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
 ### 2.3 HashEntry
 
-```
+HashEntry用来封装具体的键值对，是个典型的四元组。
+
+HashEntry包括同样的四个域，分别是key、hash、value和next。
+
+- key，hash和next域都被声明为final
+
+- value域被volatile所修饰
+
+**因此HashEntry对象几乎是不可变的，这是ConcurrentHashmap读操作并不需要加锁的一个重要原因。**
+
+```java
 //ConcurrentHashMap中真正存储数据的对象
 static final class HashEntry<K,V> {
     final int hash; //通过运算，得到的键的hash值
@@ -154,6 +212,17 @@ static final class HashEntry<K,V> {
     }
 }
 ```
+
+
+
+### 2.4 count 变量
+
+> volatile
+
+​	一个计数器，它表示每个 Segment 对象管理的 table 数组包含的 HashEntry 对象的个数，也就是 Segment 中包含的 HashEntry 对象的总数。之所以在每个 Segment 对象中包含一个计数器，而不是在 ConcurrentHashMap 中使用全局的计数器，是对 ConcurrentHashMap 并发性的考虑：**因为这样当需要更新计数器时，不用锁定整个ConcurrentHashMap**。
+
+1. 每次对段进行结构上的改变，如在段中进行增加/删除节点(修改节点的值不算结构上的改变)，都要更新count的值。
+2. 在JDK的实现中每次读取操作开始都要先读取count的值。
 
 
 
