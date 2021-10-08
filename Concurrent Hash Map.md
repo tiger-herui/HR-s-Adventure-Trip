@@ -106,12 +106,20 @@ public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
 ![zaZodQBbXeN6LCm](https://i.loli.net/2021/09/22/zaZodQBbXeN6LCm.jpg)
 
 1. 根据 key 计算出 hashcode 。
+
 2. 判断是否需要进行初始化。
+
 3. 即为当前 key 定位出的 Node，如果为空表示当前位置可以写入数据，利用 CAS 尝试写入，失败则自旋保证成功。
+
 4. 如果当前位置的 `hashcode == MOVED == -1`,则需要进行扩容。
+
 5. 如果都不满足，则利用 synchronized 锁写入数据。
+
 6. 如果数量大于 `TREEIFY_THRESHOLD` 则要转换为红黑树。
-7. ![qjXbrhQViTodO7U](https://i.loli.net/2021/09/29/qjXbrhQViTodO7U.jpg)
+
+   
+
+   ![qjXbrhQViTodO7U](https://i.loli.net/2021/09/29/qjXbrhQViTodO7U.jpg)
 
 ```java
 public V put(K key, V value) {
@@ -127,14 +135,15 @@ final V putVal(K key, V value, boolean onlyIfAbsent) {
     int hash = spread(key.hashCode());
     //记录某个桶上元素的个数，如果超过8个，会转成红黑树
     int binCount = 0;
-    for (Node<K,V>[] tab = table;;) {
+  //死循环保证新增一定成功  
+  for (Node<K,V>[] tab = table;;) {
         Node<K,V> f; int n, i, fh;
         //如果数组还未初始化，先对数组进行初始化
         if (tab == null || (n = tab.length) == 0)
             tab = initTable();
 	    //如果hash计算得到的桶位置没有元素，利用cas将元素添加
         else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-            //cas+自旋（和外侧的for构成自旋循环），保证元素添加安全
+            //cas+自旋（和外侧的for构成自旋循环），保证元素添加安全(一定添加上)
             if (casTabAt(tab, i, null,
                          new Node<K,V>(hash, key, value, null)))
                 break;                   // no lock when adding to empty bin
@@ -241,7 +250,19 @@ private final Node<K,V>[] initTable() {
 
 ## 3 jdk1.8扩容安全
 
-​	段内扩容（段内元素超过该段对应Entry数组长度的75%触发扩容，不会对整个Map进行扩容），插入前检测需不需要扩容，有效避免无效扩容。
+ConcurrentHashMap 扩容的方法叫做 transfer，从 put 方法的 addCount 方法进去，就能找到 transfer 方法，transfer 方法的主要思路是：
+
+1.首先需要把老数组的值全部拷贝到扩容之后的新数组上，先从数组的队尾开始拷贝；
+
+2.拷贝数组的槽点时，先把原数组槽点锁住，保证原数组槽点不能操作，成功拷贝到新数组时，把原数组槽点赋值为转移节点；
+
+3.这时如果有新数据正好需要 put 到此槽点时，发现槽点为转移节点，就会一直等待，所以在扩容完成之前，该槽点对应的数据是不会发生变化的；
+
+4.从数组的尾部拷贝到头部，每拷贝成功一次，就把原数组中的节点设置成转移节点；
+
+5.直到所有数组数据都拷贝到新数组时，直接把新数组整个赋值给数组容器，拷贝完成。
+
+段内扩容（段内元素超过该段对应Entry数组长度的75%触发扩容，不会对整个Map进行扩容），插入前检测需不需要扩容，有效避免无效扩容。
 
 ![MKQdtTPWwOz1hx2](https://i.loli.net/2021/09/22/MKQdtTPWwOz1hx2.png)
 
@@ -405,6 +426,8 @@ private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
 
 ## 4 jdk1.8多线程扩容效率改进
 
+在 `ConcurrentHashMap` 中采用的是分段扩容法，即每个线程负责一段，默认最小是 `16`，也就是说如果 `ConcurrentHashMap` 中只有 `16` 个槽位，那么就只会有一个线程参与扩容。如果大于 `16` 则根据当前 `CPU` 数来进行分配，最大参与扩容线程数不会超过 `CPU` 数。
+
 > 多线程协助扩容的操作会在两个地方被触发：
 >
 > ① 当添加元素时，发现添加的元素对用的桶位为fwd节点，就会先去协助扩容，然后再添加元素
@@ -534,6 +557,7 @@ private final void addCount(long x, int check) {
         //计算元素个数
         s = sumCount();
     }
+  //check是传入的链表长度
     if (check >= 0) {
         Node<K,V>[] tab, nt; int n, sc;
         //当元素个数达到扩容阈值
@@ -542,11 +566,14 @@ private final void addCount(long x, int check) {
         //满足以上所有条件，执行扩容
         while (s >= (long)(sc = sizeCtl) && (tab = table) != null &&
                (n = tab.length) < MAXIMUM_CAPACITY) {
-            //这个是一个很大的正数
+            //扩容戳：这个是一个很大的正数
             int rs = resizeStamp(n);
             //sc小于0，说明有线程正在扩容，那么会协助扩容
             if (sc < 0) {
-                //扩容结束或者扩容线程数达到最大值或者扩容后的数组为null或者没有更多的桶位需要转移，结束操作
+             //扩容结束OR
+              //扩容线程数达到最大值OR
+              //扩容后的数组为nullOR
+              //没有更多的桶位需要转移，结束操作
                 if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 ||
                     sc == rs + MAX_RESIZERS || (nt = nextTable) == null ||
                     transferIndex <= 0)
@@ -569,6 +596,15 @@ private final void addCount(long x, int check) {
     }
 }
 ```
+
+```java
+static final int resizeStamp(int n) {
+  //获取当前数据转成二进制后的最高非0位前的‘0’的个数
+        return Integer.numberOfLeadingZeros(n) | (1 << (RESIZE_STAMP_BITS - 1));
+    }
+```
+
+
 
 ### 5.2 fullAddCount方法
 
