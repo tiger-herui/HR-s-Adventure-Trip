@@ -10,7 +10,7 @@ Everyone, regardless of race, nationality, age, gender, or wealth, should have a
 
 #### Js
 
-[Node.js]()
+[Node.js](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/NodeJS.md)
 
 ### java
 
@@ -38,7 +38,7 @@ Everyone, regardless of race, nationality, age, gender, or wealth, should have a
 
 ### DataBase
 
-[聚集索引设计指南-翻译](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/%E8%81%9A%E9%9B%86%E7%B4%A2%E5%BC%95%E8%AE%BE%E8%AE%A1%E6%8C%87%E5%8D%97.md)
+[聚集索引设计指南-翻译](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/%E7%B4%A2%E5%BC%95%E8%AE%BE%E8%AE%A1%E6%8C%87%E5%8D%97.md)
 
 [读写分离](https://github.com/tiger-herui/HR-s-Adventure-Trip/blob/main/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB.md)
 
